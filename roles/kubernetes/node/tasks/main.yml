@@ -98,38 +98,11 @@
     state: present
     value: 1
     reload: yes
-  when: sysctl_bridge_nf_call_iptables.rc == 0
+  when: modinfo_br_netfilter.rc == 1 and sysctl_bridge_nf_call_iptables.rc == 0
   with_items:
     - net.bridge.bridge-nf-call-iptables
     - net.bridge.bridge-nf-call-arptables
     - net.bridge.bridge-nf-call-ip6tables
-
-- name: Modprode Kernel Module for IPVS
-  modprobe:
-    name: "{{ item }}"
-    state: present
-  when: kube_proxy_mode == 'ipvs'
-  with_items:
-    - ip_vs
-    - ip_vs_rr
-    - ip_vs_wrr
-    - ip_vs_sh
-    - nf_conntrack_ipv4
-  tags:
-    - kube-proxy
-
-- name: Persist ip_vs modules
-  copy:
-    dest: /etc/modules-load.d/kube_proxy-ipvs.conf
-    content: |
-      ip_vs
-      ip_vs_rr
-      ip_vs_wrr
-      ip_vs_sh
-      nf_conntrack_ipv4
-  when: kube_proxy_mode == 'ipvs'
-  tags:
-    - kube-proxy
 
 - name: Write proxy manifest
   template:
@@ -146,27 +119,6 @@
   when: kubeadm_enabled
   tags:
     - kube-proxy
-
-- include_tasks: "{{ cloud_provider }}-credential-check.yml"
-  when:
-    - cloud_provider is defined
-    - cloud_provider in [ 'openstack', 'azure', 'vsphere' ]
-  tags:
-    - cloud-provider
-    - facts
-
-- name: Write cloud-config
-  template:
-    src: "{{ cloud_provider }}-cloud-config.j2"
-    dest: "{{ kube_config_dir }}/cloud_config"
-    group: "{{ kube_cert_group }}"
-    mode: 0640
-  when:
-    - cloud_provider is defined
-    - cloud_provider in [ 'openstack', 'azure', 'vsphere' ]
-  notify: restart kubelet
-  tags:
-    - cloud-provider
 
 # reload-systemd
 - meta: flush_handlers

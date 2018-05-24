@@ -29,24 +29,19 @@
   tags:
     - upgrade
 
-- include_tasks: set_cluster_health.yml
+- import_tasks: set_cluster_health.yml
   when: is_etcd_master and etcd_cluster_setup
 
-- include_tasks: configure.yml
+- import_tasks: configure.yml
   when: is_etcd_master and etcd_cluster_setup
 
-- include_tasks: refresh_config.yml
+- import_tasks: refresh_config.yml
   when: is_etcd_master and etcd_cluster_setup
 
 - name: Restart etcd if certs changed
   command: /bin/true
   notify: restart etcd
   when: is_etcd_master and etcd_secret_changed|default(false)
-
-- name: Restart etcd-events if certs changed
-  command: /bin/true
-  notify: restart etcd
-  when: is_etcd_master and etcd_events_cluster_setup and etcd_secret_changed|default(false)
 
 # reload-systemd
 - meta: flush_handlers
@@ -58,18 +53,11 @@
     enabled: yes
   when: is_etcd_master and etcd_cluster_setup
 
-- name: Ensure etcd-events is running
-  service:
-    name: etcd-events
-    state: started
-    enabled: yes
-  when: is_etcd_master and etcd_events_cluster_setup
-
 # After etcd cluster is assembled, make sure that
 # initial state of the cluster is in `existing`
 # state insted of `new`.
-- include_tasks: set_cluster_health.yml
+- import_tasks: set_cluster_health.yml
   when: is_etcd_master and etcd_cluster_setup
 
-- include_tasks: refresh_config.yml
+- import_tasks: refresh_config.yml
   when: is_etcd_master and etcd_cluster_setup

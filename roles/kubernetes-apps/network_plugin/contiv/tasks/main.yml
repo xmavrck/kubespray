@@ -3,7 +3,7 @@
 - name: Contiv | Create Kubernetes resources
   kube:
     name: "{{ item.item.name }}"
-    namespace: "kube-system"
+    namespace: "{{ system_namespace }}"
     kubectl: "{{ bin_dir }}/kubectl"
     resource: "{{ item.item.type }}"
     filename: "{{ contiv_config_dir }}/{{ item.item.file }}"

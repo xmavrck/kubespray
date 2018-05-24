@@ -18,9 +18,7 @@ options:
     required: false
     default: null
     description:
-      - The path and filename of the resource(s) definition file(s).
-      - To operate on several files this can accept a comma separated list of files or a list of files.
-    aliases: [ 'files', 'file', 'filenames' ]
+      - The path and filename of the resource(s) definition file.
   kubectl:
     required: false
     default: null
@@ -88,15 +86,6 @@ EXAMPLES = """
 
 - name: test nginx is present
   kube: filename=/tmp/nginx.yml
-
-- name: test nginx and postgresql are present
-  kube: files=/tmp/nginx.yml,/tmp/postgresql.yml
-
-- name: test nginx and postgresql are present
-  kube:
-    files:
-      - /tmp/nginx.yml
-      - /tmp/postgresql.yml
 """
 
 
@@ -123,7 +112,7 @@ class KubeManager(object):
         self.all = module.params.get('all')
         self.force = module.params.get('force')
         self.name = module.params.get('name')
-        self.filename = [f.strip() for f in module.params.get('filename') or []]
+        self.filename = module.params.get('filename')
         self.resource = module.params.get('resource')
         self.label = module.params.get('label')
 
@@ -133,7 +122,7 @@ class KubeManager(object):
             rc, out, err = self.module.run_command(args)
             if rc != 0:
                 self.module.fail_json(
-                    msg='error running kubectl (%s) command (rc=%d), out=\'%s\', err=\'%s\'' % (' '.join(args), rc, out, err))
+                    msg='error running kubectl (%s) command (rc=%d): %s' % (' '.join(args), rc, out or err))
         except Exception as exc:
             self.module.fail_json(
                 msg='error running kubectl (%s) command: %s' % (' '.join(args), str(exc)))
@@ -158,7 +147,7 @@ class KubeManager(object):
         if not self.filename:
             self.module.fail_json(msg='filename required to create')
 
-        cmd.append('--filename=' + ','.join(self.filename))
+        cmd.append('--filename=' + self.filename)
 
         return self._execute(cmd)
 
@@ -172,7 +161,7 @@ class KubeManager(object):
         if not self.filename:
             self.module.fail_json(msg='filename required to reload')
 
-        cmd.append('--filename=' + ','.join(self.filename))
+        cmd.append('--filename=' + self.filename)
 
         return self._execute(cmd)
 
@@ -184,7 +173,7 @@ class KubeManager(object):
         cmd = ['delete']
 
         if self.filename:
-            cmd.append('--filename=' + ','.join(self.filename))
+            cmd.append('--filename=' + self.filename)
         else:
             if not self.resource:
                 self.module.fail_json(msg='resource required to delete without filename')
@@ -208,31 +197,27 @@ class KubeManager(object):
     def exists(self):
         cmd = ['get']
 
-        if self.filename:
-            cmd.append('--filename=' + ','.join(self.filename))
-        else:
-            if not self.resource:
-                self.module.fail_json(msg='resource required without filename')
+        if not self.resource:
+            return False
 
-            cmd.append(self.resource)
+        cmd.append(self.resource)
 
-            if self.name:
-                cmd.append(self.name)
-
-            if self.label:
-                cmd.append('--selector=' + self.label)
-
-            if self.all:
-                cmd.append('--all-namespaces')
+        if self.name:
+            cmd.append(self.name)
 
         cmd.append('--no-headers')
+
+        if self.label:
+            cmd.append('--selector=' + self.label)
+
+        if self.all:
+            cmd.append('--all-namespaces')
 
         result = self._execute_nofail(cmd)
         if not result:
             return False
         return True
 
-    # TODO: This is currently unused, perhaps convert to 'scale' with a replicas param?
     def stop(self):
 
         if not self.force and not self.exists():
@@ -241,7 +226,7 @@ class KubeManager(object):
         cmd = ['stop']
 
         if self.filename:
-            cmd.append('--filename=' + ','.join(self.filename))
+            cmd.append('--filename=' + self.filename)
         else:
             if not self.resource:
                 self.module.fail_json(msg='resource required to stop without filename')
@@ -268,7 +253,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(),
-            filename=dict(type='list', aliases=['files', 'file', 'filenames']),
+            filename=dict(),
             namespace=dict(),
             resource=dict(),
             label=dict(),
@@ -278,8 +263,7 @@ def main():
             all=dict(default=False, type='bool'),
             log_level=dict(default=0, type='int'),
             state=dict(default='present', choices=['present', 'absent', 'latest', 'reloaded', 'stopped']),
-            ),
-            mutually_exclusive=[['filename', 'list']]
+            )
         )
 
     changed = False

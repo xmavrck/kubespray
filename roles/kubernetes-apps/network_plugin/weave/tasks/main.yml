@@ -5,7 +5,7 @@
     kubectl: "{{ bin_dir }}/kubectl"
     filename: "{{ kube_config_dir }}/weave-net.yml"
     resource: "ds"
-    namespace: "kube-system"
+    namespace: "{{system_namespace}}"
     state: "latest"
   when: inventory_hostname == groups['kube-master'][0]
 

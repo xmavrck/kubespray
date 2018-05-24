@@ -2,7 +2,7 @@
 - name: Start Calico resources
   kube:
     name: "{{item.item.name}}"
-    namespace: "kube-system"
+    namespace: "{{ system_namespace }}"
     kubectl: "{{bin_dir}}/kubectl"
     resource: "{{item.item.type}}"
     filename: "{{kube_config_dir}}/{{item.item.file}}"

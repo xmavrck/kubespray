@@ -1,9 +1,13 @@
-variable "external_net" {}
+variable "external_net" {
 
-variable "network_name" {}
+}
 
-variable "cluster_name" {}
+variable "network_name" {
+}
 
-variable "dns_nameservers" {
+variable "cluster_name" {
+}
+
+variable "dns_nameservers"{
   type = "list"
 }

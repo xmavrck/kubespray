@@ -17,7 +17,6 @@
     - download.enabled
     - download.container
     - download_run_once
-
   tags:
     - facts
 
@@ -43,7 +42,7 @@
 
 - name: container_download | Stat saved container image
   stat:
-    path: "{{ fname }}"
+    path: "{{fname}}"
   register: img
   changed_when: false
   delegate_to: "{{ download_delegate }}"

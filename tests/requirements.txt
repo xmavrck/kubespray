@@ -3,5 +3,3 @@ yamllint
 apache-libcloud==2.2.1
 boto==2.9.0
 tox
-dopy
-PyCrypto

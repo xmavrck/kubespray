@@ -3,6 +3,6 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: calico-kube-controllers
-  namespace: kube-system
+  namespace: {{ system_namespace }}
   labels:
     kubernetes.io/cluster-service: "true"
